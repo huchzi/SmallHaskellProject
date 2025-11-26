@@ -1,9 +1,9 @@
 {
   "name": "Haskell",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "context": ".."
   },
-  "features": {},
-  "forwardPorts": [],
+  "remoteUser": "vscode",
   "postCreateCommand": "stack setup"
 }
