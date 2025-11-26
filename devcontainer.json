@@ -1,0 +1,9 @@
+{
+  "name": "Haskell",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {},
+  "forwardPorts": [],
+  "postCreateCommand": "stack setup"
+}
