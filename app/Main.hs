@@ -20,10 +20,6 @@ instance FromJSON Example
 
 main :: IO ()
 main = do
-    -- Beziehung zum Nutzer herstellen
-    putStrLn "Wie heißt Du?"
-    name <- getLine
-    putStrLn $ "Hallo, " ++ name ++ "!"
 
     -- Eine JSON-Datei einlesen
     jsonData <- B.readFile "data/example.json"

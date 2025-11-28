@@ -25,6 +25,7 @@ dependencies:
 - aeson
 - xml-conduit
 - containers
+- text
 
 ghc-options:
 - -Wall

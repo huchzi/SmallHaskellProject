@@ -39,6 +39,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , text
     , xml-conduit
   default-language: Haskell2010
 
@@ -57,6 +58,7 @@ executable SmallHaskellProject-exe
     , base >=4.7 && <5
     , bytestring
     , containers
+    , text
     , xml-conduit
   default-language: Haskell2010
 
@@ -76,5 +78,6 @@ test-suite SmallHaskellProject-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , text
     , xml-conduit
   default-language: Haskell2010
