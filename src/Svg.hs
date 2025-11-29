@@ -1,26 +1,80 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Svg (fundusTemplate) where
+module Svg (fundusDrawing) where
 
 import Text.XML
-import qualified Data.Map        as M
+import qualified Data.Map  as M
 import qualified Data.Text as T
 
 -- Constants
+centerX :: String
 centerX = "200"
+
+centerY :: String
 centerY = "200"
+
+oraDistance :: Int
+oraDistance = 142
+
+data Eye = RightEye | LeftEye
 
 -- Functions for transforming
 
 type Clock = Int
+type Eccentricity = Int
 
 clockToDegree :: Clock -> Int
 clockToDegree clock = 30 * (clock - 3) + 90
 
-rotateElement :: Element -> Clock -> Element
-rotateElement e clock = e { elementAttributes = M.insert "transform" rotate $ elementAttributes e }
-    where rotate = T.pack $ "rotate(" ++ (show $ clockToDegree clock) ++ " " ++ centerX ++ " " ++ centerY ++ ")" 
+eccentricityToPixels :: Eccentricity -> Int
+eccentricityToPixels ecc = div (ecc * oraDistance) 90
 
+retinalZones :: M.Map String Eccentricity
+retinalZones = M.fromList
+    [ ("Macula",            0)
+    , ("Parafoveal",        10)
+    , ("PosteriorPole",     25)
+    , ("Posterior",         30)
+    , ("Equatorial",        50)
+    , ("PreEquatorial",     70)
+    , ("Anterior",          80)
+    , ("OraSerrata",        90)
+    ]
+
+transformElement :: Element -> T.Text -> Element
+transformElement e transformation = e { elementAttributes = M.insert "transform" transformation $ elementAttributes e }
+
+rotateTransformation :: Clock -> T.Text
+rotateTransformation clock = T.pack $ "rotate(" ++ (show $ clockToDegree clock) ++ " " ++ centerX ++ " " ++ centerY ++ ")" 
+
+translateTransformation :: Eccentricity -> T.Text
+translateTransformation ecc = T.pack $ "translate(" ++ "0  -" ++ (show $ eccentricityToPixels ecc) ++ ")"
+
+mirrorElement :: Element -> Element
+mirrorElement e = e { elementAttributes = M.insert "transform-origin" "center" $ M.insert "transform" "scale (-1,1)" $ elementAttributes e }
+
+-- Lesion Elements
+
+tearPath :: T.Text
+tearPath = T.pack $ "M" ++ leftBorder ++ "," ++ ypos ++ " A" ++ gr ++ "," ++ gr ++ " 0 0,0 " ++ rightBorder ++ "," ++ ypos  ++ " A" ++ showSR ++ "," ++ showSR ++ " 0 0,1 " ++ leftBorder ++ "," ++ ypos ++ " Z"
+  where sr = 15 :: Int
+        gr = "20"
+        xpos = 200 :: Int
+        ypos = centerY
+        leftBorder = show (xpos - sr)
+        rightBorder = show (xpos + sr)
+        showSR = show sr
+
+tearElement :: Element
+tearElement =
+  Element
+    "{http://www.w3.org/2000/svg}path"
+    (M.fromList [ ("d", tearPath)
+                , ("fill", "red")
+                , ("stroke", "blue")
+                , ("stroke-width", "2")
+                ])
+    []
 
 -- Template Elements
 
@@ -70,11 +124,11 @@ outerCircle =
 
 equatorCircle :: Element
 equatorCircle = Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")
-                                                                       , ("cy", "200")
-                                                                       , ("r", "95")
-                                                                       , ("fill", "none")
-                                                                       , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4,2;")
-                                                                       ]) []
+                                                                         , ("cy", "200")
+                                                                         , ("r", "95")
+                                                                         , ("fill", "none")
+                                                                         , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4,2;")
+                                                                         ]) []
 
 oraCircle :: Element
 oraCircle = Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")
@@ -119,7 +173,7 @@ meridianGroup =
   Element 
     "{http://www.w3.org/2000/svg}g" 
     mempty
-    (map (NodeElement . (rotateElement meridian)) [1..12]) -- create meridian for each clock hour
+    (map (NodeElement . (transformElement meridian) . rotateTransformation) [1..12]) -- create meridian for each clock hour
 
 circleGroup :: Element
 circleGroup = Element "{http://www.w3.org/2000/svg}g" mempty [ NodeElement outerCircle
@@ -147,16 +201,28 @@ fundusDocAttributes =
               , ("height", "400")
               ])
 
-fundusTemplate :: Document
-fundusTemplate =
+fundusTemplate :: Eye -> Element
+fundusTemplate eye =
+  Element
+    "{http://www.w3.org/2000/svg}g"
+    (case eye of
+        RightEye -> mempty
+        LeftEye -> M.fromList [ ("transform", "scale (-1, 1)")
+                              , ("transform-origin", "center")])
+    [ NodeElement documentBackground
+    , NodeElement oraElement
+    , NodeElement circleGroup
+    , NodeElement meridianGroup
+    , NodeElement onhCircle
+    , NodeElement maculaCircle
+    , NodeElement vesselArcades 
+    ]
+
+fundusDrawing :: Document
+fundusDrawing =
   Document
     (Prologue [] Nothing [])
-    (Element svgName fundusDocAttributes [ NodeElement documentBackground
-                                         , NodeElement oraElement
-                                         , NodeElement circleGroup
-                                         , NodeElement meridianGroup
-                                         , NodeElement onhCircle
-                                         , NodeElement maculaCircle
-                                         , NodeElement vesselArcades
-                                         ])
+    (Element svgName fundusDocAttributes [ NodeElement $ fundusTemplate LeftEye 
+                                         , NodeElement $ transformElement tearElement $ (rotateTransformation 3) <> (translateTransformation 50)]
+                                         )
     []

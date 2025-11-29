@@ -36,4 +36,4 @@ main = do
         Just ex -> mapM_ print $ zip (map show [1..]) (exampleList ex)
 
     -- Ein SVG ausgeben
-    Text.XML.writeFile def "data/fundus.svg" fundusTemplate
+    Text.XML.writeFile def "data/fundus.svg" fundusDrawing
