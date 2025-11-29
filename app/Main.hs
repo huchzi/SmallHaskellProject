@@ -34,6 +34,7 @@ main = do
     -- Etwas mit diesen Daten machen
     case example of
         Just ex -> mapM_ print $ zip (map show [1..]) (exampleList ex)
+        Nothing -> putStrLn "JSON Parsin failed."
 
     -- Ein SVG ausgeben
     Text.XML.writeFile def "data/fundus.svg" fundusDrawing

@@ -27,18 +27,18 @@ clockToDegree :: Clock -> Int
 clockToDegree clock = 30 * (clock - 3) + 90
 
 eccentricityToPixels :: Eccentricity -> Int
-eccentricityToPixels ecc = div (ecc * oraDistance) 90
+eccentricityToPixels ecc = div (ecc * oraDistance) 120
 
 retinalZones :: M.Map String Eccentricity
 retinalZones = M.fromList
     [ ("Macula",            0)
     , ("Parafoveal",        10)
-    , ("PosteriorPole",     25)
-    , ("Posterior",         30)
-    , ("Equatorial",        50)
-    , ("PreEquatorial",     70)
-    , ("Anterior",          80)
-    , ("OraSerrata",        90)
+    , ("PosteriorPole",     30)
+    , ("Posterior",         60)
+    , ("Equatorial",        90)
+    , ("PreEquatorial",     100)
+    , ("Anterior",          110)
+    , ("OraSerrata",        120)
     ]
 
 transformElement :: Element -> T.Text -> Element
@@ -75,6 +75,30 @@ tearElement =
                 , ("stroke-width", "2")
                 ])
     []
+
+circleDef :: Eccentricity -> Element
+circleDef ecc = 
+  Element
+    "{http://www.w3.org/2000/svg}def"
+    mempty
+    [ NodeElement $ Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("id", "circularPath")
+                                                                             , ("r", T.pack $ show $ eccentricityToPixels ecc)
+                                                                             , ("cx", T.pack centerX)
+                                                                             , ("cy", T.pack centerY)
+                                                                             ]) [] ]
+
+latticeElement :: Clock -> Eccentricity -> Element
+latticeElement clockDifference ecc = 
+  Element
+    "{http://www.w3.org/2000/svg}g"
+    mempty
+    [ NodeElement $ circleDef ecc
+    , NodeElement $ textElement ]
+  where textElement = Element "{http://www.w3.org/2000/svg}text" (M.fromList [("font-family", "sans-serif"), ("font-size", "20")]) [ NodeElement textPathElement ]
+        textPathElement = Element "{http://www.w3.org/2000/svg}textPath" (M.fromList [("href", "#circularPath"), ("startOffset", offsetString), ("method", "align"), ("side","right")]) [ NodeContent latticeText ]
+        offset = 25 - div (clockDifference * 100) 24  
+        offsetString = T.show offset <> "%"
+        latticeText = T.intercalate "" $ take clockDifference $ repeat "XXXX"
 
 -- Template Elements
 
@@ -223,6 +247,8 @@ fundusDrawing =
   Document
     (Prologue [] Nothing [])
     (Element svgName fundusDocAttributes [ NodeElement $ fundusTemplate LeftEye 
-                                         , NodeElement $ transformElement tearElement $ (rotateTransformation 3) <> (translateTransformation 50)]
-                                         )
+                                         , NodeElement $ transformElement (latticeElement 2 $ retinalZones M.! "Equatorial") $ (rotateTransformation 3)
+                                         , NodeElement $ transformElement tearElement $ (rotateTransformation 3) <> (translateTransformation $ retinalZones M.! "Equatorial")
+                                         -- , NodeElement $ latticeElement 1 5 $ retinalZones M.! "Equatorial"
+                                         ])
     []
