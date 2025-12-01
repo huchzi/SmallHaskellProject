@@ -21,6 +21,7 @@ data Eye = RightEye | LeftEye
 -- Functions for transforming
 
 type Clock = Int
+type ClockAngle = Int
 type Eccentricity = Int
 
 clockToDegree :: Clock -> Int
@@ -48,13 +49,21 @@ retinalZones = M.fromList
     ]
 
 transformElement :: Element -> T.Text -> Element
-transformElement e transformation = e { elementAttributes = M.insert "transform" transformation $ elementAttributes e }
+transformElement e transformation = e { elementAttributes = M.insertWith bindFunction "transform" transformation oldAttributes }
+  where oldAttributes = elementAttributes e
+        bindFunction old new = T.intercalate " " [ new, old ]
 
 rotateTransformation :: Clock -> T.Text
 rotateTransformation clock = T.pack $ "rotate(" ++ (show $ clockToDegree clock) ++ " " ++ centerX ++ " " ++ centerY ++ ")" 
 
 translateTransformation :: Eccentricity -> T.Text
 translateTransformation ecc = T.pack $ "translate(" ++ "0  -" ++ (show $ eccentricityToPixels ecc) ++ ")"
+
+rotateElement :: Clock -> Element -> Element
+rotateElement clock e = transformElement e $ rotateTransformation clock
+
+translateElement :: Clock -> Element -> Element
+translateElement clock e = transformElement e $ translateTransformation clock
 
 mirrorElement :: Element -> Element
 mirrorElement e = e { elementAttributes = M.insert "transform-origin" "center" $ M.insert "transform" "scale (-1,1)" $ elementAttributes e }
@@ -87,13 +96,14 @@ circleDef ecc =
   Element
     "{http://www.w3.org/2000/svg}def"
     mempty
-    [ NodeElement $ Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("id", "circularPath")
-                                                                             , ("r", T.pack $ show $ eccentricityToPixels ecc)
-                                                                             , ("cx", T.pack centerX)
-                                                                             , ("cy", T.pack centerY)
-                                                                             ]) [] ]
+    [ NodeElement $ Element "{http://www.w3.org/2000/svg}circle" attr [] ]
+  where attr = M.fromList [ ("id", "circularPath")
+                          , ("r", T.pack $ show $ eccentricityToPixels ecc)
+                          , ("cx", T.pack centerX)
+                          , ("cy", T.pack centerY)
+                          ]
 
-latticeArcs :: Clock -> Int -> Element
+latticeArcs :: ClockAngle -> Int -> Element
 latticeArcs clockDifference radius = 
   Element
     "{http://www.w3.org/2000/svg}g"
@@ -111,7 +121,7 @@ latticeArcs clockDifference radius =
         startAngle = 270 - div (clockDifference * 360) 24
         stopAngle = 270 + div (clockDifference * 360) 24
 
-latticeElement :: Clock -> Eccentricity -> Element
+latticeElement :: ClockAngle -> Eccentricity -> Element
 latticeElement clockDifference ecc = 
   Element
     "{http://www.w3.org/2000/svg}g"
@@ -141,60 +151,56 @@ oraElement =
     []
 
 onhCircle :: Element
-onhCircle = 
-  Element 
-    "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "230")                                                         
-                                                     , ("cy", "200")
-                                                     , ("r", "10")
-                                                     , ("fill", "#fff2cc")
-                                                     , ("style", "stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4")
-                                                     ]) 
-    []
+onhCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "230")                                                         
+                           , ("r", "10")
+                           , ("fill", "#fff2cc")
+                           , ("style", "stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4")
+                           ])
 
 maculaCircle :: Element
-maculaCircle = 
-  Element 
-    "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")                                                         
-                                                     , ("cy", "200")
-                                                     , ("r", "5")
-                                                     , ("fill", "#c48763")
-                                                     ]) 
-    []
-
+maculaCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "200")                                                         
+                           , ("cy", "200")
+                           , ("r", "5")
+                           , ("fill", "#c48763")
+                           ])
+  
 outerCircle :: Element
-outerCircle = 
-  Element 
-    "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")                                                         
-                                                     , ("cy", "200")
-                                                     , ("r", "190")
-                                                     , ("fill", "red")
-                                                     , ("style", "fill:none;stroke:black;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;")
-                                                     ]) 
-    []
+outerCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "200")
+                           , ("cy", "200")
+                           , ("r", "190")
+                           , ("fill", "red")
+                           , ("style", "fill:none;stroke:black;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;")
+                           ]) 
 
 equatorCircle :: Element
-equatorCircle = Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")
-                                                                         , ("cy", "200")
-                                                                         , ("r", "95")
-                                                                         , ("fill", "none")
-                                                                         , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4,2;")
-                                                                         ]) []
+equatorCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "200")
+                           , ("cy", "200")
+                           , ("r", "95")
+                           , ("fill", "none")
+                           , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4,2;")
+                           ])
 
 oraCircle :: Element
-oraCircle = Element "{http://www.w3.org/2000/svg}circle" (M.fromList [ ("cx", "200")
-                                                                       , ("cy", "200")
-                                                                       , ("r", "142")
-                                                                       , ("fill", "none")
-                                                                       , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2,2;")
-                                                                       ]) []
+oraCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "200")
+                           , ("cy", "200")
+                           , ("r", "142")
+                           , ("fill", "none")
+                           , ("style", "stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2,2;")
+                           ])
 
 meridian :: Element
-meridian = Element "{http://www.w3.org/2000/svg}line" (M.fromList [ ("x1", "200")
-                                                                  , ("x2", "200")
-                                                                  , ("y1", "10")
-                                                                  , ("y2", "130")
-                                                                  , ("style", "fill:none;fill-rule:nonzero;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;")
-                                                                  ]) [] 
+meridian = Element "{http://www.w3.org/2000/svg}line" attr [] 
+  where attr = (M.fromList [ ("x1", "200")
+                           , ("x2", "200")
+                           , ("y1", "10")
+                           , ("y2", "130")
+                           , ("style", "fill:none;fill-rule:nonzero;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;")
+                           ])
 
 vesselArcadePaths :: [T.Text]
 vesselArcadePaths = [ "m 243.456,190.807 c 0,-15.69 -2.90439,-28.11473 -21.7615,-35.86911 -8.603,-0.615 -13.09989,-4.67139 -21.80289,-4.67139 -8.491,0 -22.65354,-0.50484 -30.98454,-2.69384 -0.563,-0.148 -23.74603,2.01954 -23.26003,1.43954"
@@ -276,6 +282,5 @@ fundusDrawing =
                                          , NodeElement $ transformElement (latticeElement 1 $ retinalZones M.! "Equatorial") $ (rotateTransformation 3)
                                          , NodeElement $ transformElement (latticeElement 2 $ retinalZones M.! "Equatorial") $ (rotateTransformation 6)
                                          , NodeElement $ transformElement tearElement $ (rotateTransformation 3) <> (translateTransformation $ retinalZones M.! "Equatorial")
-                                         -- , NodeElement $ latticeElement 1 5 $ retinalZones M.! "Equatorial"
                                          ])
     []
