@@ -26,4 +26,6 @@ main = do
         Nothing -> putStrLn "JSON Parsing failed."
 
     -- Ein SVG ausgeben
-    Text.XML.writeFile def "data/fundus.svg" fundusDrawing
+    Text.XML.writeFile def "data/fundus.svg" $ fundusDrawing RightEye [ rotateElement 3 $ latticeElement 2 $ eccentricity Equatorial
+                                                                      , rotateElement 3 $ tearElement $ eccentricity Equatorial
+                                                                      ]

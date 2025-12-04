@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Svg (fundusDrawing) where
+module Svg (fundusDrawing, latticeElement, tearElement, rotateElement, Eye(..), RetinalZone(..), eccentricity) where
 
 import Text.XML
 import qualified Data.Map  as M
@@ -36,22 +36,31 @@ polarToCartesian angle ecc = (round x, round y)
 eccentricityToPixels :: Eccentricity -> Int
 eccentricityToPixels ecc = div (ecc * oraDistance) 120
 
-retinalZones :: M.Map String Eccentricity
-retinalZones = M.fromList
-    [ ("Macula",            0)
-    , ("Parafoveal",        10)
-    , ("PosteriorPole",     30)
-    , ("Posterior",         60)
-    , ("Equatorial",        90)
-    , ("PreEquatorial",     100)
-    , ("Anterior",          110)
-    , ("OraSerrata",        120)
-    ]
+data RetinalZone
+    = Macula
+    | Parafoveal
+    | PosteriorPole
+    | Posterior
+    | Equatorial
+    | PreEquatorial
+    | Anterior
+    | OraSerrata
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+eccentricity :: RetinalZone -> Eccentricity
+eccentricity Macula        = 0
+eccentricity Parafoveal    = 10
+eccentricity PosteriorPole = 30
+eccentricity Posterior     = 60
+eccentricity Equatorial    = 90
+eccentricity PreEquatorial = 100
+eccentricity Anterior      = 110
+eccentricity OraSerrata    = 120
 
 transformElement :: Element -> T.Text -> Element
 transformElement e transformation = e { elementAttributes = M.insertWith bindFunction "transform" transformation oldAttributes }
   where oldAttributes = elementAttributes e
-        bindFunction old new = T.intercalate " " [ new, old ]
+        bindFunction old new = T.intercalate " " [ old, new ]
 
 rotateTransformation :: Clock -> T.Text
 rotateTransformation clock = T.pack $ "rotate(" ++ (show $ clockToDegree clock) ++ " " ++ centerX ++ " " ++ centerY ++ ")" 
@@ -62,8 +71,8 @@ translateTransformation ecc = T.pack $ "translate(" ++ "0  -" ++ (show $ eccentr
 rotateElement :: Clock -> Element -> Element
 rotateElement clock e = transformElement e $ rotateTransformation clock
 
-translateElement :: Clock -> Element -> Element
-translateElement clock e = transformElement e $ translateTransformation clock
+translateElement :: Eccentricity -> Element -> Element
+translateElement ecc el = transformElement el $ translateTransformation ecc
 
 mirrorElement :: Element -> Element
 mirrorElement e = e { elementAttributes = M.insert "transform-origin" "center" $ M.insert "transform" "scale (-1,1)" $ elementAttributes e }
@@ -80,16 +89,12 @@ tearPath = T.pack $ "M" ++ leftBorder ++ "," ++ ypos ++ " A" ++ gr ++ "," ++ gr 
         rightBorder = show (xpos + sr)
         showSR = show sr
 
-tearElement :: Element
-tearElement =
-  Element
-    "{http://www.w3.org/2000/svg}path"
-    (M.fromList [ ("d", tearPath)
-                , ("fill", "red")
-                , ("stroke", "blue")
-                , ("stroke-width", "2")
-                ])
-    []
+tearElement :: Eccentricity -> Element
+tearElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/svg}path" attr []
+  where attr =  (M.fromList [ ("d", tearPath)
+                            , ("fill", "red")
+                            , ("stroke", "blue")
+                            , ("stroke-width", "2")])
 
 circleDef :: Eccentricity -> Element
 circleDef ecc = 
@@ -152,7 +157,8 @@ oraElement =
 
 onhCircle :: Element
 onhCircle = Element "{http://www.w3.org/2000/svg}circle" attr []
-  where attr = (M.fromList [ ("cx", "230")                                                         
+  where attr = (M.fromList [ ("cx", "230") 
+                           , ("cy", "200")                                                        
                            , ("r", "10")
                            , ("fill", "#fff2cc")
                            , ("style", "stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4")
@@ -274,13 +280,9 @@ fundusTemplate eye =
     , NodeElement vesselArcades 
     ]
 
-fundusDrawing :: Document
-fundusDrawing =
+fundusDrawing :: Eye -> [Element] -> Document
+fundusDrawing eye elements =
   Document
     (Prologue [] Nothing [])
-    (Element svgName fundusDocAttributes [ NodeElement $ fundusTemplate LeftEye 
-                                         , NodeElement $ transformElement (latticeElement 1 $ retinalZones M.! "Equatorial") $ (rotateTransformation 3)
-                                         , NodeElement $ transformElement (latticeElement 2 $ retinalZones M.! "Equatorial") $ (rotateTransformation 6)
-                                         , NodeElement $ transformElement tearElement $ (rotateTransformation 3) <> (translateTransformation $ retinalZones M.! "Equatorial")
-                                         ])
-    []
+    (Element svgName fundusDocAttributes $ map NodeElement ((fundusTemplate eye):elements))
+    []                                         
