@@ -1,40 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Svg (fundusDrawing, latticeElement, tearElement, rotateElement, Eye(..), RetinalZone(..), eccentricity) where
+module Svg (fundusDrawing
+           , rotateElement
+           , Eye(..)
+           , RetinalZone(..)
+           , eccentricity
+           ) 
+    where
 
+import Svg.Basic
+import Svg.Transformations
 import Text.XML
 import qualified Data.Map  as M
 import qualified Data.Text as T
-
--- Constants
-centerX :: String
-centerX = "200"
-
-centerY :: String
-centerY = "200"
-
-oraDistance :: Int
-oraDistance = 142
-
-data Eye = RightEye | LeftEye
-
--- Functions for transforming
-
-type Clock = Int
-type ClockAngle = Int
-type Eccentricity = Int
-
-clockToDegree :: Clock -> Int
-clockToDegree clock = 30 * (clock - 3) + 90
-
-polarToCartesian :: Int -> Eccentricity -> (Int, Int)
-polarToCartesian angle ecc = (round x, round y)
-  where x = radius * (cos ((fromIntegral angle) * pi / 180)) + (read centerX)
-        y = radius * (sin ((fromIntegral angle) * pi / 180)) + (read centerY)
-        radius = fromIntegral ecc
-
-eccentricityToPixels :: Eccentricity -> Int
-eccentricityToPixels ecc = div (ecc * oraDistance) 120
 
 data RetinalZone
     = Macula
@@ -56,90 +34,6 @@ eccentricity Equatorial    = 90
 eccentricity PreEquatorial = 100
 eccentricity Anterior      = 110
 eccentricity OraSerrata    = 120
-
-transformElement :: Element -> T.Text -> Element
-transformElement e transformation = e { elementAttributes = M.insertWith bindFunction "transform" transformation oldAttributes }
-  where oldAttributes = elementAttributes e
-        bindFunction old new = T.intercalate " " [ old, new ]
-
-rotateTransformation :: Clock -> T.Text
-rotateTransformation clock = T.pack $ "rotate(" ++ (show $ clockToDegree clock) ++ " " ++ centerX ++ " " ++ centerY ++ ")" 
-
-translateTransformation :: Eccentricity -> T.Text
-translateTransformation ecc = T.pack $ "translate(" ++ "0  -" ++ (show $ eccentricityToPixels ecc) ++ ")"
-
-rotateElement :: Clock -> Element -> Element
-rotateElement clock e = transformElement e $ rotateTransformation clock
-
-translateElement :: Eccentricity -> Element -> Element
-translateElement ecc el = transformElement el $ translateTransformation ecc
-
-mirrorElement :: Element -> Element
-mirrorElement e = e { elementAttributes = M.insert "transform-origin" "center" $ M.insert "transform" "scale (-1,1)" $ elementAttributes e }
-
--- Lesion Elements
-
-tearPath :: T.Text
-tearPath = T.pack $ "M" ++ leftBorder ++ "," ++ ypos ++ " A" ++ gr ++ "," ++ gr ++ " 0 0,0 " ++ rightBorder ++ "," ++ ypos  ++ " A" ++ showSR ++ "," ++ showSR ++ " 0 0,1 " ++ leftBorder ++ "," ++ ypos ++ " Z"
-  where sr = 15 :: Int
-        gr = "20"
-        xpos = 200 :: Int
-        ypos = centerY
-        leftBorder = show (xpos - sr)
-        rightBorder = show (xpos + sr)
-        showSR = show sr
-
-tearElement :: Eccentricity -> Element
-tearElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/svg}path" attr []
-  where attr =  (M.fromList [ ("d", tearPath)
-                            , ("fill", "red")
-                            , ("stroke", "blue")
-                            , ("stroke-width", "2")])
-
-circleDef :: Eccentricity -> Element
-circleDef ecc = 
-  Element
-    "{http://www.w3.org/2000/svg}def"
-    mempty
-    [ NodeElement $ Element "{http://www.w3.org/2000/svg}circle" attr [] ]
-  where attr = M.fromList [ ("id", "circularPath")
-                          , ("r", T.pack $ show $ eccentricityToPixels ecc)
-                          , ("cx", T.pack centerX)
-                          , ("cy", T.pack centerY)
-                          ]
-
-latticeArcs :: ClockAngle -> Int -> Element
-latticeArcs clockDifference radius = 
-  Element
-    "{http://www.w3.org/2000/svg}g"
-    mempty
-    (map (NodeElement . arcElement) [innerArc, outerArc, startArc, stopArc])
-  where arcElement arcPath = Element "{http://www.w3.org/2000/svg}path"  (M.fromList [ ("d", arcPath), ("stroke", "black"), ("fill", "none"), ("stroke-width", "2")]) []
-        innerArc = T.intercalate "" ["M ", T.show x1, " ", T.show y1, " A ", T.show radius, " ", T.show radius, " 0 0 1 ", T.show x2, " ", T.show y2]
-        outerArc = T.intercalate "" ["M ", T.show x3, " ", T.show y3, " A ", T.show (radius - 16), " ", T.show (radius - 16), " 0 0 1 ", T.show x4, " ", T.show y4]
-        startArc = T.intercalate "" ["M ", T.show x1, " ", T.show y1, " A 8 8 0 0 0 ", T.show x3, " ", T.show y3]
-        stopArc  = T.intercalate "" ["M ", T.show x2, " ", T.show y2, " A 8 8 0 0 1 ", T.show x4, " ", T.show y4]          
-        (x2, y2) = polarToCartesian stopAngle radius
-        (x1, y1) = polarToCartesian startAngle radius
-        (x4, y4) = polarToCartesian stopAngle (radius - 16)
-        (x3, y3) = polarToCartesian startAngle (radius - 16)
-        startAngle = 270 - div (clockDifference * 360) 24
-        stopAngle = 270 + div (clockDifference * 360) 24
-
-latticeElement :: ClockAngle -> Eccentricity -> Element
-latticeElement clockDifference ecc = 
-  Element
-    "{http://www.w3.org/2000/svg}g"
-    mempty
-    [ NodeElement $ circleDef ecc
-    , NodeElement $ textElement 
-    , NodeElement $ latticeArcs clockDifference (eccentricityToPixels ecc) 
-    ]
-  where textElement = Element "{http://www.w3.org/2000/svg}text" (M.fromList [("font-family", "sans-serif"), ("font-size", "20")]) [ NodeElement textPathElement ]
-        textPathElement = Element "{http://www.w3.org/2000/svg}textPath" (M.fromList [("href", "#circularPath"), ("startOffset", offsetString), ("method", "align"), ("side","right")]) [ NodeContent latticeText ]
-        offset = 25 - div (clockDifference * 100) 24  
-        offsetString = T.show offset <> "%"
-        latticeText = T.intercalate "" $ take clockDifference $ repeat "XXXX"
 
 -- Template Elements
 

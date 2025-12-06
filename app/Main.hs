@@ -5,6 +5,7 @@ module Main (main) where
 
 import Lib
 import Svg
+import Svg.Lesions
 import Json
 import GHC.Generics (Generic)
 import qualified Data.ByteString.Lazy as B
@@ -26,6 +27,8 @@ main = do
         Nothing -> putStrLn "JSON Parsing failed."
 
     -- Ein SVG ausgeben
-    Text.XML.writeFile def "data/fundus.svg" $ fundusDrawing RightEye [ rotateElement 3 $ latticeElement 2 $ eccentricity Equatorial
-                                                                      , rotateElement 3 $ tearElement $ eccentricity Equatorial
+    Text.XML.writeFile def "data/fundus.svg" $ fundusDrawing RightEye [ rotateElement 3  $ latticeElement 2 $ eccentricity Equatorial
+                                                                      , rotateElement 3  $ tearElement $ eccentricity Equatorial
+                                                                      , rotateElement 11 $ roundHoleElement $ eccentricity Anterior
+                                                                      , rotateElement 6  $ cobbleStoneElement $ eccentricity PreEquatorial
                                                                       ]

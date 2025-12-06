@@ -28,6 +28,9 @@ library
       Json
       Lib
       Svg
+      Svg.Basic
+      Svg.Lesions
+      Svg.Transformations
   other-modules:
       Paths_SmallHaskellProject
   autogen-modules:
