@@ -24,15 +24,15 @@ tearPath = T.pack $ "M" ++ leftBorder ++ "," ++ ypos ++ " A" ++ gr ++ "," ++ gr 
         rightBorder = show (xpos + sr)
         showSR = show sr
 
-tearElement :: Eccentricity -> Element
-tearElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/svg}path" attr []
+tearElement :: Clock -> Eccentricity -> Element
+tearElement clock ecc = rotateElement clock $ translateElement ecc $ Element "{http://www.w3.org/2000/svg}path" attr []
   where attr =  (M.fromList [ ("d", tearPath)
                             , ("fill", "red")
                             , ("stroke", "blue")
                             , ("stroke-width", "2")])
 
-roundHoleElement :: Eccentricity -> Element
-roundHoleElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/svg}circle" attr []
+roundHoleElement :: Clock -> Eccentricity -> Element
+roundHoleElement clock ecc = rotateElement clock $ translateElement ecc $ Element "{http://www.w3.org/2000/svg}circle" attr []
   where attr =  (M.fromList [ ("r", "5")
                             , ("cx", "200")                                                         
                             , ("cy", "200")
@@ -40,8 +40,8 @@ roundHoleElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/s
                             , ("stroke", "blue")
                             , ("stroke-width", "2")])
 
-cobbleStoneElement :: Eccentricity -> Element
-cobbleStoneElement ecc = translateElement ecc $ Element "{http://www.w3.org/2000/svg}rect" attr []
+cobbleStoneElement :: Clock -> Eccentricity -> Element
+cobbleStoneElement clock ecc = rotateElement clock $ translateElement ecc $ Element "{http://www.w3.org/2000/svg}rect" attr []
   where attr =  (M.fromList [ ("x", "196")                                                         
                             , ("y", "196")
                             , ("width", "8")
@@ -80,15 +80,15 @@ latticeArcs clockDifference radius =
         startAngle = 270 - div (clockDifference * 360) 24
         stopAngle = 270 + div (clockDifference * 360) 24
 
-latticeElement :: ClockAngle -> Eccentricity -> Element
-latticeElement clockDifference ecc = 
-  Element
-    "{http://www.w3.org/2000/svg}g"
-    mempty
-    [ NodeElement $ circleDef ecc
-    , NodeElement $ textElement 
-    , NodeElement $ latticeArcs clockDifference (eccentricityToPixels ecc) 
-    ]
+latticeElement :: Clock -> Eccentricity -> ClockAngle -> Element
+latticeElement clock ecc clockDifference = 
+  rotateElement clock $ Element
+                          "{http://www.w3.org/2000/svg}g"
+                          mempty
+                          [ NodeElement $ circleDef ecc
+                          , NodeElement $ textElement 
+                          , NodeElement $ latticeArcs clockDifference (eccentricityToPixels ecc) 
+                          ]
   where textElement = Element "{http://www.w3.org/2000/svg}text" (M.fromList [("font-family", "sans-serif"), ("font-size", "20")]) [ NodeElement textPathElement ]
         textPathElement = Element "{http://www.w3.org/2000/svg}textPath" (M.fromList [("href", "#circularPath"), ("startOffset", offsetString), ("method", "align"), ("side","right")]) [ NodeContent latticeText ]
         offset = 25 - div (clockDifference * 100) 24  
