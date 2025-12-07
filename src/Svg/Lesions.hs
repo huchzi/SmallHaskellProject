@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Svg.Lesions (latticeElement
-                  , tearElement
-                  , roundHoleElement
-                  , cobbleStoneElement) 
-    where
+module Svg.Lesions 
+(latticeElement
+, tearElement
+, roundHoleElement
+, cobbleStoneElement
+, encirclingBandElement) 
+where
 
 import Text.XML
 import qualified Data.Map  as M
@@ -94,3 +96,12 @@ latticeElement clock ecc clockDifference =
         offset = 25 - div (clockDifference * 100) 24  
         offsetString = T.show offset <> "%"
         latticeText = T.intercalate "" $ take clockDifference $ repeat "XXXX"
+
+encirclingBandElement :: Element
+encirclingBandElement = Element "{http://www.w3.org/2000/svg}circle" attr []
+  where attr = (M.fromList [ ("cx", "200")
+                           , ("cy", "200")
+                           , ("r", "98")
+                           , ("fill", "none")
+                           , ("style", "stroke:brown;stroke-width:4px;")
+                           ])
