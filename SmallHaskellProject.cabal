@@ -30,6 +30,7 @@ library
       Svg
       Svg.Basic
       Svg.Lesions
+      Svg.Template
       Svg.Transformations
   other-modules:
       Paths_SmallHaskellProject

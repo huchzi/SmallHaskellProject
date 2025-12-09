@@ -5,7 +5,11 @@ module Svg.Lesions
 , tearElement
 , roundHoleElement
 , cobbleStoneElement
-, encirclingBandElement) 
+, encirclingBandElement
+, cryoLesionElement
+, laserLesionElement
+, detachmentElement
+) 
 where
 
 import Text.XML
@@ -105,3 +109,36 @@ encirclingBandElement = Element "{http://www.w3.org/2000/svg}circle" attr []
                            , ("fill", "none")
                            , ("style", "stroke:brown;stroke-width:4px;")
                            ])
+
+
+cryoLesionElement :: Clock -> Eccentricity -> Element
+cryoLesionElement clock ecc = position $ Element "{http://www.w3.org/2000/svg}text" attr [NodeContent $ "C"]
+  where position = (rotateElement clock) . (translateElement ecc) . (rotateElement (12 - clock))
+        attr = M.fromList[ ("x", T.pack centerX)
+                         , ("y", T.pack centerY)
+                         , ("fill", "darkgreen")
+                         , ("font-family", "sans-serif")
+                         , ("font-weight", "bold")
+                         , ("font-size", "20")
+                         ]
+
+laserLesionElement :: Clock -> Eccentricity -> Element
+laserLesionElement clock ecc = position $ Element "{http://www.w3.org/2000/svg}text" attr [NodeContent $ "L"]
+  where position = (rotateElement clock) . (translateElement ecc) . (rotateElement (12 - clock))
+        attr = M.fromList[ ("x", T.pack centerX)
+                         , ("y", T.pack centerY)
+                         , ("fill", "darkgreen")
+                         , ("font-family", "sans-serif")
+                         , ("font-weight", "bold")
+                         , ("font-size", "20")
+                         ]
+
+detachmentElement :: Element
+detachmentElement = Element "{http://www.w3.org/2000/svg}ellipse" attr []
+  where attr = M.fromList[ ("cx", "200")
+                         , ("cy", "30")
+                         , ("rx", "80")
+                         , ("ry", "100")
+                         , ("fill", "blue")
+                         , ("fill-opacity", "0.4")
+                         ]
