@@ -13,6 +13,14 @@ import Data.Aeson
 import Text.XML
 import qualified Data.Map        as M
 
+-- Ein geparstes SVG ausgeben
+myFundus :: Fundus
+myFundus = Fundus 
+            { eyeSide = "RightEye"
+            , tears = [("horseshoe", 3, eccentricity Equatorial)]
+            , equatorial = [] 
+            }
+
 main :: IO ()
 main = do
 
@@ -27,7 +35,7 @@ main = do
         Nothing -> putStrLn "JSON Parsing failed."
 
     -- Ein SVG ausgeben
-    Text.XML.writeFile def "data/fundus.svg" $ fundusDrawing RightEye [ detachmentElement
+    Text.XML.writeFile def "data/fundus.svg" $ fundusDrawing LeftEye  [ detachmentGroup [detachmentElement 3, detachmentElement 4]
                                                                       , encirclingBandElement
                                                                       , latticeElement 3 (eccentricity Equatorial) 2 
                                                                       , tearElement 3 $ eccentricity Equatorial
@@ -35,3 +43,5 @@ main = do
                                                                       , cobbleStoneElement 6 $ eccentricity PreEquatorial
                                                                       , laserLesionElement 7 $ eccentricity PreEquatorial
                                                                       ]
+    
+    Text.XML.writeFile def "data/parsedFundus.svg" $ jsonToSvg myFundus

@@ -9,6 +9,7 @@ module Svg.Lesions
 , cryoLesionElement
 , laserLesionElement
 , detachmentElement
+, detachmentGroup
 ) 
 where
 
@@ -133,12 +134,18 @@ laserLesionElement clock ecc = position $ Element "{http://www.w3.org/2000/svg}t
                          , ("font-size", "20")
                          ]
 
-detachmentElement :: Element
-detachmentElement = Element "{http://www.w3.org/2000/svg}ellipse" attr []
+detachmentGroup :: [Element] -> Element
+detachmentGroup detachments = Element "{http://www.w3.org/2000/svg}g" attr (map NodeElement detachments)
+  where attr = M.fromList [ ("opacity", "0.4")
+                          , ("clip-path", "url(#ora)")
+                          ]
+
+detachmentElement :: Clock -> Element
+detachmentElement pos = rotateElement pos $ Element "{http://www.w3.org/2000/svg}ellipse" attr []
   where attr = M.fromList[ ("cx", "200")
                          , ("cy", "30")
                          , ("rx", "80")
                          , ("ry", "100")
                          , ("fill", "blue")
-                         , ("fill-opacity", "0.4")
+                         , ("fill-opacity", "1.0")
                          ]

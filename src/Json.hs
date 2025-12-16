@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Json (Fundus, eyeSide, tears, equatorial) where
+module Json (Fundus(..), eyeSide, tears, equatorial) where
 
-import Lib
 import Svg
 import GHC.Generics (Generic)
 import qualified Data.ByteString.Lazy as B
