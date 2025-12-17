@@ -1,0 +1,5 @@
+{
+    "eyeSide": "RightEye",
+    "equatorial": [["lattice", 3, 90, 1]],
+    "tears": [["horseshoe", 3, 90], ["horseshoe", 12, 90]]
+}

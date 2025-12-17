@@ -13,25 +13,13 @@ import Data.Aeson
 import Text.XML
 import qualified Data.Map        as M
 
--- Ein geparstes SVG ausgeben
-myFundus :: Fundus
-myFundus = Fundus 
-            { eyeSide = "RightEye"
-            , tears = [("horseshoe", 3, eccentricity Equatorial)]
-            , equatorial = [] 
-            }
-
 main :: IO ()
 main = do
-
-    -- Eine JSON-Datei einlesen
-    jsonData <- B.readFile "data/example.json"
-
-    -- Die JSON-Datei in den Datentyp Example parsen
-    let example = decode jsonData :: Maybe Fundus
-    
-    case example of
-        Just f -> print $ eyeSide f
+    jsonData <- B.readFile "data/drawing1.json"
+    let drawing = decode jsonData :: Maybe Fundus
+    print drawing
+    case drawing of
+        Just f ->  Text.XML.writeFile def "data/parsedFundus.svg" $ jsonToSvg f
         Nothing -> putStrLn "JSON Parsing failed."
 
     -- Ein SVG ausgeben
@@ -44,4 +32,3 @@ main = do
                                                                       , laserLesionElement 7 $ eccentricity PreEquatorial
                                                                       ]
     
-    Text.XML.writeFile def "data/parsedFundus.svg" $ jsonToSvg myFundus

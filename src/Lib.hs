@@ -12,5 +12,6 @@ jsonToSvg input = fundusDrawing eye elements
     where eye      = case (eyeSide input) of
                         "RightEye" -> RightEye
                         "LeftEye"  -> LeftEye
-          elements = map parseTear $ tears input
+          elements = (map parseEquatorial $ equatorial input) ++ (map parseTear $ tears input)
           parseTear (_, clock, ecc) = tearElement clock ecc
+          parseEquatorial (_, clock, ecc, angle) = latticeElement clock ecc angle
