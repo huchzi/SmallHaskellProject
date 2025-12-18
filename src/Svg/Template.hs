@@ -132,18 +132,18 @@ circleGroup = Element "{http://www.w3.org/2000/svg}g" mempty [ NodeElement outer
 
 fundusTemplate :: Eye -> Element
 fundusTemplate eye =
-  Element
-    "{http://www.w3.org/2000/svg}g"
-    (case eye of
-        RightEye -> mempty
-        LeftEye -> M.fromList [ ("transform", "scale (-1, 1)")
-                              , ("transform-origin", "center")])
-    [ NodeElement $ oraDefinition eye 
-    , NodeElement documentBackground
-    , NodeElement oraElement
-    , NodeElement circleGroup
-    , NodeElement meridianGroup
-    , NodeElement onhCircle
-    , NodeElement maculaCircle
-    , NodeElement vesselArcades 
-    ]
+  case eye of
+      RightEye -> template
+      LeftEye -> mirrorElement $ template
+  where template = Element
+                      "{http://www.w3.org/2000/svg}g"
+                      mempty
+                      [ NodeElement $ oraDefinition eye 
+                      , NodeElement documentBackground
+                      , NodeElement oraElement
+                      , NodeElement circleGroup
+                      , NodeElement meridianGroup
+                      , NodeElement onhCircle
+                      , NodeElement maculaCircle
+                      , NodeElement vesselArcades 
+                      ]

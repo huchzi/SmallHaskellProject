@@ -31,4 +31,4 @@ translateElement :: Eccentricity -> Element -> Element
 translateElement ecc el = transformElement el $ translateTransformation ecc
 
 mirrorElement :: Element -> Element
-mirrorElement e = e { elementAttributes = M.insert "transform-origin" "center" $ M.insert "transform" "scale (-1,1)" $ elementAttributes e }
+mirrorElement e = e { elementAttributes = M.insert "transform" "translate(400 0) scale(-1 1)" $ elementAttributes e }
