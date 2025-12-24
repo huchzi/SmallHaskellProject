@@ -26,6 +26,10 @@ dependencies:
 - xml-conduit
 - containers
 - text
+- servant
+- servant-server
+- wai
+- warp
 
 ghc-options:
 - -Wall

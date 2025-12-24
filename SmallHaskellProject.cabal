@@ -44,7 +44,11 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , servant
+    , servant-server
     , text
+    , wai
+    , warp
     , xml-conduit
   default-language: Haskell2010
 
@@ -63,7 +67,11 @@ executable SmallHaskellProject-exe
     , base >=4.7 && <5
     , bytestring
     , containers
+    , servant
+    , servant-server
     , text
+    , wai
+    , warp
     , xml-conduit
   default-language: Haskell2010
 
@@ -83,6 +91,10 @@ test-suite SmallHaskellProject-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , servant
+    , servant-server
     , text
+    , wai
+    , warp
     , xml-conduit
   default-language: Haskell2010
